@@ -1,5 +1,14 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 
+  const winPatterns = [
+    [0, 1, 2], [3, 4, 5], [6, 7, 8],
+    [0, 3, 6], [1, 4, 7], [2, 5, 8],
+    [0, 4, 8], [2, 4, 6]
+  ];
+
+
+
+
 const TicTacToe = ({ onBack }) => {
   const [board, setBoard] = useState(Array(9).fill(''));
   const [isXNext, setIsXNext] = useState(true);
@@ -11,11 +20,6 @@ const TicTacToe = ({ onBack }) => {
   
   const computerTimeoutRef = useRef(null);
 
-  const winPatterns = [
-    [0, 1, 2], [3, 4, 5], [6, 7, 8],
-    [0, 3, 6], [1, 4, 7], [2, 5, 8],
-    [0, 4, 8], [2, 4, 6]
-  ];
 
   const playSound = useCallback((text) => {
     try {
@@ -37,7 +41,7 @@ const TicTacToe = ({ onBack }) => {
       }
     }
     return null;
-  }, [winPatterns]);
+  }, []);
 
   const makeMove = useCallback((index, player) => {
     if (winner !== null || board[index] !== '') return false;
