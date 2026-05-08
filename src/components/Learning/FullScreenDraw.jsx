@@ -7,8 +7,8 @@ const FullScreenDraw = ({ letter, word, type, onComplete, onClose }) => {
   const [completed, setCompleted] = useState(false);
   const [drawingPoints, setDrawingPoints] = useState(0);
   const [message, setMessage] = useState('');
+  const [touchStart, setTouchStart] = useState(null);
 
-  // Initialize canvas
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -16,50 +16,37 @@ const FullScreenDraw = ({ letter, word, type, onComplete, onClose }) => {
     const context = canvas.getContext('2d');
     setCtx(context);
     
-    canvas.width = window.innerWidth - 40;
-    canvas.height = window.innerHeight - 200;
-    
-    // Set background
-    context.fillStyle = '#FFF9C4';
-    context.fillRect(0, 0, canvas.width, canvas.height);
-    
-    // Draw guide letter (faint grey)
-    context.save();
-    context.globalAlpha = 0.35;
-    const fontSize = Math.min(250, canvas.width / 2.5);
-    context.font = `bold ${fontSize}px "Comic Sans MS", cursive`;
-    context.fillStyle = '#9CA3AF';
-    context.textAlign = 'center';
-    context.textBaseline = 'middle';
-    context.fillText(letter, canvas.width / 2, canvas.height / 2);
-    context.restore();
-    
-    // Drawing style
-    context.strokeStyle = '#2563eb';
-    context.lineWidth = 12;
-    context.lineCap = 'round';
-    context.lineJoin = 'round';
-    
-    // Resize handler
-    const handleResize = () => {
-      canvas.width = window.innerWidth - 40;
-      canvas.height = window.innerHeight - 200;
+    // Set canvas size for mobile
+    const resizeCanvas = () => {
+      canvas.width = window.innerWidth - 30;
+      canvas.height = window.innerHeight - 180;
+      
+      // Set background
       context.fillStyle = '#FFF9C4';
       context.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Draw guide letter
       context.save();
       context.globalAlpha = 0.35;
+      const fontSize = Math.min(180, canvas.width / 2);
       context.font = `bold ${fontSize}px "Comic Sans MS", cursive`;
       context.fillStyle = '#9CA3AF';
       context.textAlign = 'center';
       context.textBaseline = 'middle';
       context.fillText(letter, canvas.width / 2, canvas.height / 2);
       context.restore();
+      
+      // Drawing style
       context.strokeStyle = '#2563eb';
       context.lineWidth = 12;
+      context.lineCap = 'round';
+      context.lineJoin = 'round';
     };
     
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    resizeCanvas();
+    
+    window.addEventListener('resize', resizeCanvas);
+    return () => window.removeEventListener('resize', resizeCanvas);
   }, [letter]);
 
   const playSuccessSound = () => {
@@ -117,6 +104,7 @@ const FullScreenDraw = ({ letter, word, type, onComplete, onClose }) => {
     e.preventDefault();
     setIsDrawing(true);
     const pos = getCoordinates(e);
+    setTouchStart(pos);
     ctx.beginPath();
     ctx.moveTo(pos.x, pos.y);
     setMessage('✏️ Trace the letter...');
@@ -141,8 +129,8 @@ const FullScreenDraw = ({ letter, word, type, onComplete, onClose }) => {
     setIsDrawing(false);
     ctx.beginPath();
     
-    // Check if drawing has enough strokes (50+ points = good drawing)
-    if (drawingPoints > 50) {
+    // Check if drawing has enough strokes
+    if (drawingPoints > 40) {
       setCompleted(true);
       playSuccessSound();
       setMessage('🎉 Perfect! Moving to next! 🎉');
@@ -150,7 +138,7 @@ const FullScreenDraw = ({ letter, word, type, onComplete, onClose }) => {
       setTimeout(() => {
         if (onComplete) onComplete(letter);
         onClose();
-      }, 2000);
+      }, 1500);
     } else if (drawingPoints > 10) {
       playTryAgainSound();
       setMessage('❌ Not enough tracing! Try again! ❌');
@@ -176,10 +164,9 @@ const FullScreenDraw = ({ letter, word, type, onComplete, onClose }) => {
     ctx.fillStyle = '#FFF9C4';
     ctx.fillRect(0, 0, canvasRef.current.width, canvasRef.current.height);
     
-    // Redraw guide letter
     ctx.save();
     ctx.globalAlpha = 0.35;
-    const fontSize = Math.min(250, canvasRef.current.width / 2.5);
+    const fontSize = Math.min(180, canvasRef.current.width / 2);
     ctx.font = `bold ${fontSize}px "Comic Sans MS", cursive`;
     ctx.fillStyle = '#9CA3AF';
     ctx.textAlign = 'center';
@@ -193,51 +180,56 @@ const FullScreenDraw = ({ letter, word, type, onComplete, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-gradient-to-br from-purple-700 via-pink-600 to-orange-500">
-      {/* Close Button */}
-      <button
-        onClick={onClose}
-        className="absolute top-4 right-4 bg-white/20 hover:bg-white/30 text-white p-3 rounded-full text-2xl z-10 transition-all hover:scale-110"
-      >
-        ✖️
-      </button>
-      
-      {/* Sound Button */}
-      <button
-        onClick={playLetterSound}
-        className="absolute top-4 left-4 bg-white/20 hover:bg-white/30 text-white p-3 rounded-full text-2xl z-10 transition-all hover:scale-110"
-      >
-        🔊
-      </button>
-      
-      {/* Header */}
-      <div className="text-center pt-6 pb-2">
-        <div className="bg-white/20 backdrop-blur-sm inline-block rounded-2xl px-8 py-3">
-          <span className="text-2xl font-bold text-white">Trace the letter</span>
-          <span className="text-yellow-300 text-7xl font-bold mx-3">{letter}</span>
-          <span className="text-white/80 text-sm">({word})</span>
+    <div className="fixed inset-0 z-50 bg-gradient-to-br from-purple-700 via-pink-600 to-orange-500 flex flex-col">
+      {/* Top Bar */}
+      <div className="flex justify-between items-center p-4 bg-black/20 backdrop-blur-sm">
+        <button
+          onClick={playLetterSound}
+          className="bg-white/20 hover:bg-white/30 text-white p-3 rounded-full transition-all w-12 h-12 flex items-center justify-center"
+        >
+          🔊
+        </button>
+        
+        <div className="text-center">
+          <div className="bg-white/20 backdrop-blur-sm rounded-2xl px-4 py-2">
+            <span className="text-white text-sm font-bold">Trace:</span>
+            <span className="text-yellow-300 text-4xl font-bold mx-2">{letter}</span>
+          </div>
         </div>
+        
+        <button
+          onClick={onClose}
+          className="bg-white/20 hover:bg-white/30 text-white p-3 rounded-full transition-all w-12 h-12 flex items-center justify-center"
+        >
+          ✖️
+        </button>
       </div>
       
       {/* Message */}
       {message && (
-        <div className={`text-center mt-2 mb-2 ${message.includes('Perfect') ? 'animate-bounce' : ''}`}>
-          <div className={`inline-block px-6 py-2 rounded-full ${
-            message.includes('Perfect') ? 'bg-green-500' : 
+        <div className="absolute top-20 left-0 right-0 z-20 flex justify-center">
+          <div className={`px-4 py-2 rounded-full text-white font-bold text-sm ${
+            message.includes('Perfect') ? 'bg-green-500 animate-bounce' : 
             message.includes('Not enough') ? 'bg-red-500' : 
             message.includes('Please') ? 'bg-red-500' : 'bg-blue-500'
-          } text-white font-semibold`}>
+          }`}>
             {message}
           </div>
         </div>
       )}
       
-      {/* Canvas Area */}
-      <div className="flex justify-center items-center px-5 mt-2">
+      {/* Canvas Area - Full Screen Drawing */}
+      <div className="flex-1 flex items-center justify-center p-3">
         <canvas
           ref={canvasRef}
-          className="border-4 border-white rounded-2xl shadow-2xl cursor-crosshair"
-          style={{ width: 'calc(100% - 40px)', height: 'calc(100vh - 220px)' }}
+          className="border-4 border-white rounded-2xl shadow-2xl touch-none"
+          style={{ 
+            width: 'calc(100% - 20px)', 
+            height: 'auto',
+            maxHeight: 'calc(100vh - 160px)',
+            backgroundColor: '#FFF9C4',
+            touchAction: 'none'
+          }}
           onMouseDown={startDrawing}
           onMouseMove={draw}
           onMouseUp={stopDrawing}
@@ -245,22 +237,31 @@ const FullScreenDraw = ({ letter, word, type, onComplete, onClose }) => {
           onTouchStart={startDrawing}
           onTouchMove={draw}
           onTouchEnd={stopDrawing}
+          onTouchCancel={stopDrawing}
         />
       </div>
       
-      {/* Instructions */}
-      <div className="absolute bottom-5 left-0 right-0 text-center">
-        <div className="flex justify-center gap-4">
-          <p className="text-white text-sm bg-black/30 inline-block px-4 py-1 rounded-full">
-            ✏️ Trace the grey letter completely
-          </p>
-        </div>
+      {/* Bottom Controls */}
+      <div className="p-4 bg-black/20 backdrop-blur-sm flex justify-center gap-4">
         <button
           onClick={clearCanvas}
-          className="mt-3 bg-red-500/80 hover:bg-red-600 text-white px-6 py-2 rounded-full transition-all text-sm"
+          className="bg-red-500/80 hover:bg-red-600 text-white px-6 py-3 rounded-xl transition-all font-semibold text-sm"
         >
           🧹 Clear & Start Over
         </button>
+        <button
+          onClick={playLetterSound}
+          className="bg-green-500/80 hover:bg-green-600 text-white px-6 py-3 rounded-xl transition-all font-semibold text-sm"
+        >
+          🔊 Hear Sound
+        </button>
+      </div>
+      
+      {/* Instructions */}
+      <div className="p-2 text-center bg-black/20">
+        <p className="text-white/80 text-xs">
+          ✏️ Use your finger to trace the grey letter
+        </p>
       </div>
     </div>
   );
