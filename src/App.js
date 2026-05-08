@@ -1,25 +1,35 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { useState } from 'react';
+import MainMenu from './components/Layout/MainMenu';
+import LearningSection from './components/Learning/LearningSection';
+import GamesMenu from './components/Games/GamesMenu';
 
 function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+  const [activeSection, setActiveSection] = useState('menu'); // 'menu', 'learning', 'games'
+  const [selectedMode, setSelectedMode] = useState(null);
+
+  const handleMenuSelect = (mode) => {
+    setSelectedMode(mode);
+    if (mode === 'games') {
+      setActiveSection('games');
+    } else {
+      setActiveSection('learning');
+    }
+  };
+
+  const handleBack = () => {
+    setActiveSection('menu');
+    setSelectedMode(null);
+  };
+
+  if (activeSection === 'menu') {
+    return <MainMenu onSelect={handleMenuSelect} />;
+  }
+
+  if (activeSection === 'games') {
+    return <GamesMenu onBack={handleBack} />;
+  }
+
+  return <LearningSection mode={selectedMode} onBack={handleBack} />;
 }
 
-export default App;
+export default App
