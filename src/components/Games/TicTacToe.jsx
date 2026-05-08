@@ -37,7 +37,7 @@ const TicTacToe = ({ onBack }) => {
       }
     }
     return null;
-  }, []);
+  }, [winPatterns]);
 
   const makeMove = useCallback((index, player) => {
     if (winner !== null || board[index] !== '') return false;

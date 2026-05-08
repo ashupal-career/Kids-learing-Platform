@@ -64,12 +64,12 @@ const MemoryMatch = ({ onBack }) => {
     window.speechSynthesis.speak(sound);
   };
 
-  const playTryAgainSound = () => {
-    const sound = new SpeechSynthesisUtterance(`Try again! Find the matching pair!`);
-    sound.lang = 'en-US';
-    sound.rate = 0.8;
-    window.speechSynthesis.speak(sound);
-  };
+  // const playTryAgainSound = () => {
+  //   const sound = new SpeechSynthesisUtterance(`Try again! Find the matching pair!`);
+  //   sound.lang = 'en-US';
+  //   sound.rate = 0.8;
+  //   window.speechSynthesis.speak(sound);
+  // };
 
   const handleCardClick = (index) => {
     if (waiting) return;
