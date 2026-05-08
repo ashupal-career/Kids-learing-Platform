@@ -7,7 +7,7 @@ const FullScreenDraw = ({ letter, word, type, onComplete, onClose }) => {
   const [completed, setCompleted] = useState(false);
   const [drawingPoints, setDrawingPoints] = useState(0);
   const [message, setMessage] = useState('');
-  const [touchStart, setTouchStart] = useState(null);
+  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -16,29 +16,45 @@ const FullScreenDraw = ({ letter, word, type, onComplete, onClose }) => {
     const context = canvas.getContext('2d');
     setCtx(context);
     
-    // Set canvas size for mobile
     const resizeCanvas = () => {
-      canvas.width = window.innerWidth - 30;
-      canvas.height = window.innerHeight - 180;
+      canvas.width = window.innerWidth - 40;
+      canvas.height = window.innerHeight - 200;
       
-      // Set background
-      context.fillStyle = '#FFF9C4';
+      // Gradient background
+      const gradient = context.createLinearGradient(0, 0, canvas.width, canvas.height);
+      gradient.addColorStop(0, '#FFF9C4');
+      gradient.addColorStop(1, '#FFE0B2');
+      context.fillStyle = gradient;
       context.fillRect(0, 0, canvas.width, canvas.height);
       
-      // Draw guide letter
+      // Draw decorative stars
+      for (let i = 0; i < 20; i++) {
+        context.fillStyle = `rgba(255, 193, 7, ${Math.random() * 0.3})`;
+        context.beginPath();
+        context.arc(Math.random() * canvas.width, Math.random() * canvas.height, Math.random() * 3, 0, Math.PI * 2);
+        context.fill();
+      }
+      
+      // Draw guide letter with glow effect
+      context.shadowBlur = 0;
       context.save();
-      context.globalAlpha = 0.35;
-      const fontSize = Math.min(180, canvas.width / 2);
+      context.globalAlpha = 0.25;
+      const fontSize = Math.min(200, canvas.width / 2.2);
       context.font = `bold ${fontSize}px "Comic Sans MS", cursive`;
       context.fillStyle = '#9CA3AF';
       context.textAlign = 'center';
       context.textBaseline = 'middle';
       context.fillText(letter, canvas.width / 2, canvas.height / 2);
+      
+      // Draw outline for guide letter
+      context.strokeStyle = '#D1D5DB';
+      context.lineWidth = 2;
+      context.strokeText(letter, canvas.width / 2, canvas.height / 2);
       context.restore();
       
       // Drawing style
       context.strokeStyle = '#2563eb';
-      context.lineWidth = 12;
+      context.lineWidth = 10;
       context.lineCap = 'round';
       context.lineJoin = 'round';
     };
@@ -49,8 +65,14 @@ const FullScreenDraw = ({ letter, word, type, onComplete, onClose }) => {
     return () => window.removeEventListener('resize', resizeCanvas);
   }, [letter]);
 
+  // Update progress
+  useEffect(() => {
+    const newProgress = Math.min((drawingPoints / 50) * 100, 100);
+    setProgress(newProgress);
+  }, [drawingPoints]);
+
   const playSuccessSound = () => {
-    const utterance = new SpeechSynthesisUtterance(`Good job! Next alphabet!`);
+    const utterance = new SpeechSynthesisUtterance(`Excellent! You wrote ${letter} perfectly! Great job!`);
     utterance.lang = 'en-US';
     utterance.rate = 0.9;
     utterance.pitch = 1.2;
@@ -104,10 +126,11 @@ const FullScreenDraw = ({ letter, word, type, onComplete, onClose }) => {
     e.preventDefault();
     setIsDrawing(true);
     const pos = getCoordinates(e);
-    setTouchStart(pos);
     ctx.beginPath();
     ctx.moveTo(pos.x, pos.y);
-    setMessage('✏️ Trace the letter...');
+    ctx.strokeStyle = '#2563eb';
+    ctx.shadowBlur = 0;
+    setMessage('✨ Keep tracing! You\'re doing great! ✨');
     setTimeout(() => setMessage(''), 2000);
   };
 
@@ -129,19 +152,19 @@ const FullScreenDraw = ({ letter, word, type, onComplete, onClose }) => {
     setIsDrawing(false);
     ctx.beginPath();
     
-    // Check if drawing has enough strokes
     if (drawingPoints > 40) {
       setCompleted(true);
       playSuccessSound();
-      setMessage('🎉 Perfect! Moving to next! 🎉');
+      setMessage('🎉🎉 PERFECT! Amazing job! 🎉🎉');
+      setProgress(100);
       
       setTimeout(() => {
         if (onComplete) onComplete(letter);
         onClose();
-      }, 1500);
+      }, 2000);
     } else if (drawingPoints > 10) {
       playTryAgainSound();
-      setMessage('❌ Not enough tracing! Try again! ❌');
+      setMessage('💪 Almost there! Try again! 💪');
       
       setTimeout(() => {
         clearCanvas();
@@ -150,7 +173,7 @@ const FullScreenDraw = ({ letter, word, type, onComplete, onClose }) => {
       }, 2000);
     } else {
       playTryAgainSound();
-      setMessage('❌ Please trace the letter completely! ❌');
+      setMessage('🌟 Start from the letter and trace completely! 🌟');
       
       setTimeout(() => {
         setMessage('');
@@ -161,72 +184,101 @@ const FullScreenDraw = ({ letter, word, type, onComplete, onClose }) => {
   const clearCanvas = () => {
     if (!ctx || !canvasRef.current) return;
     
-    ctx.fillStyle = '#FFF9C4';
-    ctx.fillRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+    const canvas = canvasRef.current;
+    const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+    gradient.addColorStop(0, '#FFF9C4');
+    gradient.addColorStop(1, '#FFE0B2');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Redraw decorative stars
+    for (let i = 0; i < 20; i++) {
+      ctx.fillStyle = `rgba(255, 193, 7, ${Math.random() * 0.3})`;
+      ctx.beginPath();
+      ctx.arc(Math.random() * canvas.width, Math.random() * canvas.height, Math.random() * 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
     
     ctx.save();
-    ctx.globalAlpha = 0.35;
-    const fontSize = Math.min(180, canvasRef.current.width / 2);
+    ctx.globalAlpha = 0.25;
+    const fontSize = Math.min(200, canvas.width / 2.2);
     ctx.font = `bold ${fontSize}px "Comic Sans MS", cursive`;
     ctx.fillStyle = '#9CA3AF';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(letter, canvasRef.current.width / 2, canvasRef.current.height / 2);
+    ctx.fillText(letter, canvas.width / 2, canvas.height / 2);
+    ctx.strokeStyle = '#D1D5DB';
+    ctx.lineWidth = 2;
+    ctx.strokeText(letter, canvas.width / 2, canvas.height / 2);
     ctx.restore();
     
     ctx.strokeStyle = '#2563eb';
-    ctx.lineWidth = 12;
+    ctx.lineWidth = 10;
     setDrawingPoints(0);
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-gradient-to-br from-purple-700 via-pink-600 to-orange-500 flex flex-col">
-      {/* Top Bar */}
-      <div className="flex justify-between items-center p-4 bg-black/20 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 bg-gradient-to-br from-purple-700 via-pink-600 to-orange-500 flex flex-col animate-fadeIn">
+      {/* Top Bar with Glassmorphism */}
+      <div className="flex justify-between items-center p-4 bg-white/10 backdrop-blur-xl border-b border-white/20">
         <button
           onClick={playLetterSound}
-          className="bg-white/20 hover:bg-white/30 text-white p-3 rounded-full transition-all w-12 h-12 flex items-center justify-center"
+          className="group bg-white/20 hover:bg-white/30 text-white p-3 rounded-2xl transition-all duration-300 transform hover:scale-110 w-12 h-12 flex items-center justify-center shadow-lg"
         >
-          🔊
+          <span className="text-2xl group-hover:animate-bounce">🔊</span>
         </button>
         
         <div className="text-center">
-          <div className="bg-white/20 backdrop-blur-sm rounded-2xl px-4 py-2">
-            <span className="text-white text-sm font-bold">Trace:</span>
-            <span className="text-yellow-300 text-4xl font-bold mx-2">{letter}</span>
+          <div className="bg-gradient-to-r from-yellow-400/30 to-orange-400/30 backdrop-blur-xl rounded-2xl px-6 py-2 border border-white/30 shadow-xl">
+            <span className="text-white/90 text-sm font-bold uppercase tracking-wide">Tracing</span>
+            <span className="text-yellow-300 text-6xl font-black mx-2 animate-pulse">{letter}</span>
+            <span className="text-white/90 text-sm font-bold uppercase tracking-wide">{word}</span>
           </div>
         </div>
         
         <button
           onClick={onClose}
-          className="bg-white/20 hover:bg-white/30 text-white p-3 rounded-full transition-all w-12 h-12 flex items-center justify-center"
+          className="group bg-white/20 hover:bg-red-500/60 text-white p-3 rounded-2xl transition-all duration-300 transform hover:scale-110 w-12 h-12 flex items-center justify-center shadow-lg"
         >
-          ✖️
+          <span className="text-2xl group-hover:rotate-90 transition-transform">✖️</span>
         </button>
       </div>
       
-      {/* Message */}
+      {/* Progress Bar */}
+      <div className="px-6 pt-3">
+        <div className="bg-white/20 rounded-full h-2 overflow-hidden">
+          <div 
+            className="bg-gradient-to-r from-green-400 to-yellow-400 h-full transition-all duration-500 rounded-full shadow-lg"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+        <p className="text-white/70 text-xs text-center mt-1 font-medium">
+          {progress < 30 ? '📝 Start tracing...' : progress < 70 ? '✏️ You\'re doing great!' : '🎨 Almost there!'}
+        </p>
+      </div>
+      
+      {/* Message with Animation */}
       {message && (
-        <div className="absolute top-20 left-0 right-0 z-20 flex justify-center">
-          <div className={`px-4 py-2 rounded-full text-white font-bold text-sm ${
-            message.includes('Perfect') ? 'bg-green-500 animate-bounce' : 
-            message.includes('Not enough') ? 'bg-red-500' : 
-            message.includes('Please') ? 'bg-red-500' : 'bg-blue-500'
+        <div className="absolute top-24 left-0 right-0 z-20 flex justify-center pointer-events-none">
+          <div className={`px-6 py-3 rounded-2xl text-white font-bold text-base shadow-2xl animate-bounce backdrop-blur-sm ${
+            message.includes('PERFECT') ? 'bg-gradient-to-r from-green-500 to-emerald-600' : 
+            message.includes('Almost') ? 'bg-gradient-to-r from-yellow-500 to-orange-600' : 
+            message.includes('Start') ? 'bg-gradient-to-r from-blue-500 to-cyan-600' : 'bg-gradient-to-r from-purple-500 to-pink-600'
           }`}>
             {message}
           </div>
         </div>
       )}
       
-      {/* Canvas Area - Full Screen Drawing */}
-      <div className="flex-1 flex items-center justify-center p-3">
+      {/* Canvas Area */}
+      <div className="flex-1 flex items-center justify-center p-4">
         <canvas
           ref={canvasRef}
-          className="border-4 border-white rounded-2xl shadow-2xl touch-none"
+          className="rounded-3xl shadow-2xl cursor-crosshair touch-none ring-4 ring-white/30"
           style={{ 
             width: 'calc(100% - 20px)', 
             height: 'auto',
-            maxHeight: 'calc(100vh - 160px)',
+            maxHeight: 'calc(100vh - 200px)',
             backgroundColor: '#FFF9C4',
             touchAction: 'none'
           }}
@@ -242,26 +294,32 @@ const FullScreenDraw = ({ letter, word, type, onComplete, onClose }) => {
       </div>
       
       {/* Bottom Controls */}
-      <div className="p-4 bg-black/20 backdrop-blur-sm flex justify-center gap-4">
-        <button
-          onClick={clearCanvas}
-          className="bg-red-500/80 hover:bg-red-600 text-white px-6 py-3 rounded-xl transition-all font-semibold text-sm"
-        >
-          🧹 Clear & Start Over
-        </button>
-        <button
-          onClick={playLetterSound}
-          className="bg-green-500/80 hover:bg-green-600 text-white px-6 py-3 rounded-xl transition-all font-semibold text-sm"
-        >
-          🔊 Hear Sound
-        </button>
-      </div>
-      
-      {/* Instructions */}
-      <div className="p-2 text-center bg-black/20">
-        <p className="text-white/80 text-xs">
-          ✏️ Use your finger to trace the grey letter
-        </p>
+      <div className="p-4 bg-white/10 backdrop-blur-xl border-t border-white/20">
+        <div className="flex justify-center gap-4">
+          <button
+            onClick={clearCanvas}
+            className="group bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white px-8 py-3 rounded-2xl transition-all duration-300 transform hover:scale-105 font-bold text-base shadow-xl flex items-center gap-2"
+          >
+            <span className="text-xl group-hover:rotate-12 transition-transform">🧹</span>
+            Clear
+          </button>
+          <button
+            onClick={playLetterSound}
+            className="group bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-8 py-3 rounded-2xl transition-all duration-300 transform hover:scale-105 font-bold text-base shadow-xl flex items-center gap-2"
+          >
+            <span className="text-xl group-hover:animate-bounce">🔊</span>
+            Hear Sound
+          </button>
+        </div>
+        
+        {/* Instructions */}
+        <div className="text-center mt-3">
+          <p className="text-white/70 text-xs font-medium flex items-center justify-center gap-2">
+            <span>✏️</span>
+            Trace the grey letter with your finger
+            <span>✨</span>
+          </p>
+        </div>
       </div>
     </div>
   );
