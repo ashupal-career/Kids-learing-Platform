@@ -94,9 +94,9 @@ const AlphabetCard = ({ alphabet, word, color, type = 'english', onComplete, isC
           {/* Sound Button */}
           <button
             onClick={playClickSound}
-            className="absolute top-3 right-3 bg-yellow-400 hover:bg-yellow-500 text-white p-3 rounded-full transition-all duration-300 transform hover:scale-110 shadow-lg text-xl"
+            // className="absolute top-3 right-3 bg-yellow-400 hover:bg-yellow-500 text-white p-3 rounded-full transition-all duration-300 transform hover:scale-110 shadow-lg text-xl"
           >
-            🔊
+            {/* 🔊 */}
           </button>
           
           {/* Completion Badge */}
